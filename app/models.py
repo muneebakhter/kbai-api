@@ -72,3 +72,14 @@ class QueryRequest(BaseModel):
 class QueryResponse(BaseModel):
     answer: str
     sources: List[str] = []
+
+class AuthModes(BaseModel):
+    jwt_enabled: bool = True
+    api_key_enabled: bool = True
+    api_key_configured: bool
+
+class HealthStatus(BaseModel):
+    status: str = "healthy"
+    database: str = "connected" 
+    uptime_seconds: Optional[float] = None
+    version: str = "1.0.0"

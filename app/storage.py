@@ -58,21 +58,43 @@ class DB:
             trace
         )
 
-    def list_traces(self, since: Optional[str], limit: int, status: Optional[int], path: Optional[str], ip: Optional[str]) -> List[sqlite3.Row]:
+    def get_trace_by_id(self, trace_id: str) -> Optional[sqlite3.Row]:
+        """Get a single trace by ID."""
+        rows = self.query("SELECT * FROM traces WHERE id=? LIMIT 1", (trace_id,))
+        return rows[0] if rows else None
+
+    def list_traces(self, since: Optional[str], limit: int, status: Optional[int], path: Optional[str], ip: Optional[str], has_error: Optional[bool] = None, since_seconds: Optional[int] = None) -> List[sqlite3.Row]:
         sql = "SELECT * FROM traces WHERE 1=1"
         params: List[Any] = []
+        
         if since:
             sql += " AND ts >= ?"
             params.append(since)
+        
+        if since_seconds is not None:
+            from datetime import datetime, timedelta
+            since_time = (datetime.utcnow() - timedelta(seconds=since_seconds)).isoformat(timespec='seconds') + "Z"
+            sql += " AND ts >= ?"
+            params.append(since_time)
+            
         if status is not None:
             sql += " AND status = ?"
             params.append(status)
+            
         if path:
             sql += " AND path LIKE ?"
-            params.append(path + '%')
+            params.append('%' + path + '%')  # substring search
+            
         if ip:
             sql += " AND ip = ?"
             params.append(ip)
+            
+        if has_error is not None:
+            if has_error:
+                sql += " AND error IS NOT NULL"
+            else:
+                sql += " AND error IS NULL"
+                
         sql += " ORDER BY ts DESC LIMIT ?"
         params.append(limit)
         return self.query(sql, tuple(params))
