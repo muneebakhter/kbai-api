@@ -20,3 +20,15 @@ ENV/
 # OS files
 .DS_Store
 Thumbs.db
+
+# Database files
+*.db
+*.db-shm
+*.db-wal
+
+# Temporary files
+main_original.py
+
+# Data directories
+.kbai/
+proj_mapping.txt
