@@ -16,6 +16,8 @@ from pydantic import BaseModel, Field
 from prometheus_client import Counter, Gauge, Histogram, generate_latest, CONTENT_TYPE_LATEST
 
 
+from dotenv import load_dotenv
+
 APP_DIR = Path(__file__).resolve().parent
 # Canonical storage root in HOME as requested
 HOME_ROOT = Path.home()
@@ -24,6 +26,7 @@ LOG_DIR = HOME_ROOT / ".kbai"
 LOG_DIR.mkdir(parents=True, exist_ok=True)
 REQUEST_LOG = LOG_DIR / "requests.jsonl"
 
+load_dotenv(dotenv_path=APP_DIR.parent / ".env", override=False)
 SECURE_TOKEN = os.environ.get("KBAI_API_TOKEN") or secrets.token_hex(16)
 
 
