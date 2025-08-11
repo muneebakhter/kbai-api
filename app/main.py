@@ -315,7 +315,7 @@ async def delete_kb(project_id: str, kb_id: str, request: Request):
 
 @app.post("/v1/projects/{project_id}/ingest", dependencies=[Depends(require_auth)])
 @track_metrics("/v1/projects/{id}/ingest")
-async def ingest_data(project_id: str, file: UploadFile = File(...), request: Request):
+async def ingest_data(project_id: str, request: Request, file: UploadFile = File(...)):
     trace_id = getattr(request.state, "trace_id", None)
     return JSONResponse({"detail": "Not implemented", "trace_id": trace_id}, status_code=501)
 
