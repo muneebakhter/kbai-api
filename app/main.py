@@ -297,8 +297,29 @@ async def health_status(request: Request, auth: dict = Depends(get_current_auth)
     )
 
 @app.get("/admin/metrics/stream", tags=["Admin"])
-async def metrics_stream(request: Request, auth: dict = Depends(get_current_auth)):
+async def metrics_stream(
+    request: Request, 
+    api_key: Optional[str] = Query(None),
+    token: Optional[str] = Query(None)
+):
     """Server-Sent Events stream for real-time metrics updates."""
+    
+    # Authenticate using query parameters (since SSE can't use custom headers)
+    auth_valid = False
+    if api_key and api_key == KBAI_API_TOKEN:
+        auth_valid = True
+    elif token:
+        try:
+            from .auth import decode_token
+            claims = decode_token(token)
+            # Simple validation - in production you'd want to check session validity
+            if claims.get("sub"):
+                auth_valid = True
+        except Exception:
+            pass
+    
+    if not auth_valid:
+        raise HTTPException(status_code=401, detail="Invalid authentication for SSE")
     
     async def event_generator():
         """Generate SSE events with metrics data."""
