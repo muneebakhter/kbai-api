@@ -16,23 +16,29 @@
   </head>
   <body>
     <h1>Knowledge Base AI - Admin</h1>
-    <p>Projects</p>
+    <p>Recent Requests</p>
     <table>
       <thead>
-        <tr><th>ID</th><th>Name</th><th>Status</th></tr>
+        <tr>
+          <th>Time (UTC)</th>
+          <th>Trace</th>
+          <th>IP</th>
+          <th>Method</th>
+          <th>Path</th>
+          <th>Status</th>
+          <th>Latency</th>
+        </tr>
       </thead>
       <tbody>
-        {% for p in projects %}
+        {% for r in logs %}
         <tr>
-          <td>{{ p.id }}</td>
-          <td>{{ p.name }}</td>
-          <td>
-            {% if p.active %}
-              <span class="badge active">active</span>
-            {% else %}
-              <span class="badge inactive">inactive</span>
-            {% endif %}
-          </td>
+          <td>{{ r.ts }}</td>
+          <td style="font-family:monospace">{{ r.trace_id }}</td>
+          <td>{{ r.ip }}</td>
+          <td>{{ r.method }}</td>
+          <td>{{ r.path }}</td>
+          <td>{{ r.status }}</td>
+          <td>{{ r.latency_ms }} ms</td>
         </tr>
         {% endfor %}
       </tbody>

@@ -5,6 +5,7 @@ import secrets
 import time
 from pathlib import Path
 import json
+import uuid
 from typing import Dict, List, Optional
 
 from fastapi import Depends, FastAPI, File, Form, HTTPException, Request, Response, UploadFile
@@ -16,9 +17,12 @@ from prometheus_client import Counter, Gauge, Histogram, generate_latest, CONTEN
 
 
 APP_DIR = Path(__file__).resolve().parent
-DATA_DIR = APP_DIR.parent / "data"
-DATA_DIR.mkdir(parents=True, exist_ok=True)
-PROJ_MAP_FILE = DATA_DIR / "proj_mapping.txt"
+# Canonical storage root in HOME as requested
+HOME_ROOT = Path.home()
+PROJ_MAP_FILE = HOME_ROOT / "proj_mapping.txt"
+LOG_DIR = HOME_ROOT / ".kbai"
+LOG_DIR.mkdir(parents=True, exist_ok=True)
+REQUEST_LOG = LOG_DIR / "requests.jsonl"
 
 SECURE_TOKEN = os.environ.get("KBAI_API_TOKEN") or secrets.token_hex(16)
 
@@ -37,6 +41,73 @@ READY_GAUGE = Gauge("kbai_ready", "Readiness state (1 ready, 0 not)")
 def require_auth(credentials: Optional[HTTPAuthorizationCredentials] = Depends(security)):
     if not credentials or credentials.scheme.lower() != "bearer" or credentials.credentials != SECURE_TOKEN:
         raise HTTPException(status_code=401, detail="Unauthorized")
+
+
+def _append_request_log(entry: dict) -> None:
+    try:
+        with REQUEST_LOG.open("a", encoding="utf-8") as f:
+            f.write(json.dumps(entry, ensure_ascii=False) + "\n")
+    except Exception:
+        # Best-effort logging; ignore errors
+        pass
+
+
+@app.middleware("http")
+async def request_logger(request: Request, call_next):
+    start = time.perf_counter()
+    trace_id = uuid.uuid4().hex
+    request.state.trace_id = trace_id
+    client_ip = request.client.host if request.client else ""
+    path = request.url.path
+    method = request.method
+    query = dict(request.query_params)
+    ua = request.headers.get("user-agent", "")
+
+    try:
+        response = await call_next(request)
+        status = response.status_code
+    except HTTPException as exc:
+        status = exc.status_code
+        raise
+    finally:
+        latency = (time.perf_counter() - start) * 1000.0
+        # attach trace header
+        try:
+            if 'X-Trace-Id' not in response.headers:
+                response.headers['X-Trace-Id'] = trace_id
+        except Exception:
+            pass
+        content_length = None
+        try:
+            cl = response.headers.get('content-length')
+            content_length = int(cl) if cl is not None else None
+        except Exception:
+            content_length = None
+
+        log_entry = {
+            "ts": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+            "trace_id": trace_id,
+            "ip": client_ip,
+            "method": method,
+            "path": path,
+            "query": query,
+            "status": int(locals().get("status", 500)),
+            "latency_ms": round(latency, 2),
+            "content_length": content_length,
+            "user_agent": ua,
+        }
+        _append_request_log(log_entry)
+        # Metrics
+        try:
+            REQUEST_COUNT.labels(method, path, str(log_entry["status"])).inc()
+        except Exception:
+            pass
+        try:
+            REQUEST_LATENCY.labels(path).observe(latency / 1000.0)
+        except Exception:
+            pass
+
+    return response
 
 
 class Project(BaseModel):
@@ -132,7 +203,7 @@ async def healthz():
 @app.get("/readyz", response_class=PlainTextResponse)
 @track_metrics("/readyz")
 async def readyz():
-    ready = PROJ_MAP_FILE.exists()
+    ready = REQUEST_LOG.exists()
     READY_GAUGE.set(1 if ready else 0)
     return "ready" if ready else "not ready"
 
@@ -163,47 +234,37 @@ async def auth_token(req: TokenRequest):
 
 @app.post("/v1/projects", dependencies=[Depends(require_auth)])
 @track_metrics("/v1/projects:post")
-async def add_or_rename_project(project: Project):
-    mapping = _read_proj_map()
-    mapping[project.id] = project
-    _project_dir(project.id)
-    _write_proj_map(mapping)
-    return project
+async def add_or_rename_project(project: Project, request: Request):
+    trace_id = getattr(request.state, "trace_id", None)
+    return JSONResponse({"detail": "Not implemented", "trace_id": trace_id}, status_code=501)
 
 
 @app.get("/v1/projects", response_model=List[Project])
 @track_metrics("/v1/projects:get")
-async def list_projects():
-    return list(_read_proj_map().values())
+async def list_projects(request: Request):
+    trace_id = getattr(request.state, "trace_id", None)
+    return JSONResponse({"detail": "Not implemented", "trace_id": trace_id}, status_code=501)
 
 
 @app.get("/v1/projects/{project_id}", response_model=Project)
 @track_metrics("/v1/projects/{id}:get")
-async def get_project(project_id: str):
-    mapping = _read_proj_map()
-    if project_id not in mapping:
-        raise HTTPException(status_code=404, detail="Project not found")
-    return mapping[project_id]
+async def get_project(project_id: str, request: Request):
+    trace_id = getattr(request.state, "trace_id", None)
+    return JSONResponse({"detail": "Not implemented", "trace_id": trace_id}, status_code=501)
 
 
 @app.delete("/v1/projects/{project_id}", dependencies=[Depends(require_auth)])
 @track_metrics("/v1/projects/{id}:delete")
-async def soft_delete_project(project_id: str):
-    mapping = _read_proj_map()
-    proj = mapping.get(project_id)
-    if not proj:
-        raise HTTPException(status_code=404, detail="Project not found")
-    proj.active = False
-    mapping[project_id] = proj
-    _write_proj_map(mapping)
-    return {"status": "ok"}
+async def soft_delete_project(project_id: str, request: Request):
+    trace_id = getattr(request.state, "trace_id", None)
+    return JSONResponse({"detail": "Not implemented", "trace_id": trace_id}, status_code=501)
 
 
 @app.get("/v1/projects/{project_id}/faqs", response_model=List[FAQ])
 @track_metrics("/v1/projects/{id}/faqs:get")
-async def list_faqs(project_id: str):
-    d = _project_dir(project_id) / "faqs"
-    return [_ for _ in map(lambda o: FAQ(**o), _list_json(d))]
+async def list_faqs(project_id: str, request: Request):
+    trace_id = getattr(request.state, "trace_id", None)
+    return JSONResponse({"detail": "Not implemented", "trace_id": trace_id}, status_code=501)
 
 
 class BatchFAQUpsertRequest(BaseModel):
@@ -212,26 +273,23 @@ class BatchFAQUpsertRequest(BaseModel):
 
 @app.post("/v1/projects/{project_id}/faqs:batch_upsert", dependencies=[Depends(require_auth)])
 @track_metrics("/v1/projects/{id}/faqs:batch_upsert")
-async def batch_upsert_faqs(project_id: str, req: BatchFAQUpsertRequest):
-    d = _project_dir(project_id) / "faqs"
-    for item in req.items:
-        _write_json(d / f"{item.id}.json", item.model_dump())
-    return {"upserted": len(req.items)}
+async def batch_upsert_faqs(project_id: str, req: BatchFAQUpsertRequest, request: Request):
+    trace_id = getattr(request.state, "trace_id", None)
+    return JSONResponse({"detail": "Not implemented", "trace_id": trace_id}, status_code=501)
 
 
 @app.delete("/v1/projects/{project_id}/faqs/{faq_id}", dependencies=[Depends(require_auth)])
 @track_metrics("/v1/projects/{id}/faqs:delete")
-async def delete_faq(project_id: str, faq_id: str):
-    d = _project_dir(project_id) / "faqs"
-    _delete_json(d / f"{faq_id}.json")
-    return {"deleted": faq_id}
+async def delete_faq(project_id: str, faq_id: str, request: Request):
+    trace_id = getattr(request.state, "trace_id", None)
+    return JSONResponse({"detail": "Not implemented", "trace_id": trace_id}, status_code=501)
 
 
 @app.get("/v1/projects/{project_id}/kb", response_model=List[KBArticle])
 @track_metrics("/v1/projects/{id}/kb:get")
-async def list_kb(project_id: str):
-    d = _project_dir(project_id) / "kb"
-    return [_ for _ in map(lambda o: KBArticle(**o), _list_json(d))]
+async def list_kb(project_id: str, request: Request):
+    trace_id = getattr(request.state, "trace_id", None)
+    return JSONResponse({"detail": "Not implemented", "trace_id": trace_id}, status_code=501)
 
 
 class BatchKBUpsertRequest(BaseModel):
@@ -240,36 +298,30 @@ class BatchKBUpsertRequest(BaseModel):
 
 @app.post("/v1/projects/{project_id}/kb:batch_upsert", dependencies=[Depends(require_auth)])
 @track_metrics("/v1/projects/{id}/kb:batch_upsert")
-async def batch_upsert_kb(project_id: str, req: BatchKBUpsertRequest):
-    d = _project_dir(project_id) / "kb"
-    for item in req.items:
-        _write_json(d / f"{item.id}.json", item.model_dump())
-    return {"upserted": len(req.items)}
+async def batch_upsert_kb(project_id: str, req: BatchKBUpsertRequest, request: Request):
+    trace_id = getattr(request.state, "trace_id", None)
+    return JSONResponse({"detail": "Not implemented", "trace_id": trace_id}, status_code=501)
 
 
 @app.delete("/v1/projects/{project_id}/kb/{kb_id}", dependencies=[Depends(require_auth)])
 @track_metrics("/v1/projects/{id}/kb:delete")
-async def delete_kb(project_id: str, kb_id: str):
-    d = _project_dir(project_id) / "kb"
-    _delete_json(d / f"{kb_id}.json")
-    return {"deleted": kb_id}
+async def delete_kb(project_id: str, kb_id: str, request: Request):
+    trace_id = getattr(request.state, "trace_id", None)
+    return JSONResponse({"detail": "Not implemented", "trace_id": trace_id}, status_code=501)
 
 
 @app.post("/v1/projects/{project_id}/ingest", dependencies=[Depends(require_auth)])
 @track_metrics("/v1/projects/{id}/ingest")
-async def ingest_data(project_id: str, file: UploadFile = File(...)):
-    d = _project_dir(project_id) / "ingest"
-    target = d / file.filename
-    content = await file.read()
-    target.write_bytes(content)
-    return {"stored_bytes": len(content), "file": file.filename}
+async def ingest_data(project_id: str, file: UploadFile = File(...), request: Request):
+    trace_id = getattr(request.state, "trace_id", None)
+    return JSONResponse({"detail": "Not implemented", "trace_id": trace_id}, status_code=501)
 
 
 @app.post("/v1/projects/{project_id}/reindex", dependencies=[Depends(require_auth)])
 @track_metrics("/v1/projects/{id}/reindex")
-async def reindex(project_id: str):
-    # Placeholder for reindex operation
-    return {"status": "reindex scheduled", "project_id": project_id}
+async def reindex(project_id: str, request: Request):
+    trace_id = getattr(request.state, "trace_id", None)
+    return JSONResponse({"detail": "Not implemented", "trace_id": trace_id}, status_code=501)
 
 
 class QueryRequest(BaseModel):
@@ -284,26 +336,45 @@ class QueryResponse(BaseModel):
 
 @app.post("/v1/query", response_model=QueryResponse)
 @track_metrics("/v1/query")
-async def query_kb(req: QueryRequest):
-    # Placeholder QA response
-    return QueryResponse(answer=f"Echo: {req.question}")
+async def query_kb(req: QueryRequest, request: Request):
+    trace_id = getattr(request.state, "trace_id", None)
+    return JSONResponse({"detail": "Not implemented", "trace_id": trace_id}, status_code=501)
 
 
 @app.get("/v1/projects/{project_id}/stats")
 @track_metrics("/v1/projects/{id}/stats")
-async def project_stats(project_id: str):
-    d = _project_dir(project_id)
-    faqs = len(list((d / "faqs").glob("*.json")))
-    kbs = len(list((d / "kb").glob("*.json")))
-    ing = len(list((d / "ingest").glob("*")))
-    return {"faqs": faqs, "kb_articles": kbs, "ingested_files": ing}
+async def project_stats(project_id: str, request: Request):
+    trace_id = getattr(request.state, "trace_id", None)
+    return JSONResponse({"detail": "Not implemented", "trace_id": trace_id}, status_code=501)
+
+
+@app.get("/admin", response_class=HTMLResponse, dependencies=[Depends(require_auth)])
+@track_metrics("/admin")
+def _tail_jsonl(path: Path, max_lines: int) -> List[dict]:
+    results: List[dict] = []
+    if not path.exists():
+        return results
+    try:
+        from collections import deque
+        dq = deque(maxlen=max_lines)
+        with path.open("r", encoding="utf-8") as f:
+            for line in f:
+                dq.append(line)
+        for line in dq:
+            try:
+                results.append(json.loads(line))
+            except Exception:
+                continue
+    except Exception:
+        pass
+    return list(reversed(results))
 
 
 @app.get("/admin", response_class=HTMLResponse, dependencies=[Depends(require_auth)])
 @track_metrics("/admin")
 async def admin_dashboard(request: Request):
-    mapping = _read_proj_map()
-    return templates.TemplateResponse("admin.html", {"request": request, "projects": mapping.values()})
+    logs = _tail_jsonl(REQUEST_LOG, 200)
+    return templates.TemplateResponse("admin.html", {"request": request, "logs": logs})
 
 
 if __name__ == "__main__":
