@@ -1,0 +1,43 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>KBAI Admin</title>
+    <style>
+      body { font-family: Arial, sans-serif; margin: 2rem; }
+      table { border-collapse: collapse; width: 100%; }
+      th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+      th { background: #f0f0f0; }
+      .badge { padding: 2px 6px; border-radius: 4px; color: white; font-size: 12px; }
+      .active { background: #2e7d32; }
+      .inactive { background: #c62828; }
+    </style>
+  </head>
+  <body>
+    <h1>Knowledge Base AI - Admin</h1>
+    <p>Projects</p>
+    <table>
+      <thead>
+        <tr><th>ID</th><th>Name</th><th>Status</th></tr>
+      </thead>
+      <tbody>
+        {% for p in projects %}
+        <tr>
+          <td>{{ p.id }}</td>
+          <td>{{ p.name }}</td>
+          <td>
+            {% if p.active %}
+              <span class="badge active">active</span>
+            {% else %}
+              <span class="badge inactive">inactive</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </body>
+</html>
+
+
