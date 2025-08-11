@@ -2,82 +2,11 @@ from __future__ import annotations
 import os, time, uuid
 from typing import List, Optional, Dict, Any
 from datetime import datetime, timedelta, timezone
+from jose import jwt, JWTError
 from fastapi import HTTPException, status, Request, Depends
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from pydantic import BaseModel
 from .storage import DB
-
-try:
-    from jose import jwt, JWTError
-except ImportError:
-    # Fallback for simple JWT implementation without python-jose
-    import json
-    import base64
-    import hmac
-    import hashlib
-    
-    class JWTError(Exception):
-        pass
-    
-    class jwt:
-        @staticmethod
-        def encode(payload: dict, key: str, algorithm: str = "HS256") -> str:
-            header = {"typ": "JWT", "alg": algorithm}
-            
-            def _base64_encode(data: dict) -> str:
-                json_str = json.dumps(data, separators=(',', ':'))
-                return base64.urlsafe_b64encode(json_str.encode()).decode().rstrip('=')
-            
-            header_b64 = _base64_encode(header)
-            payload_b64 = _base64_encode(payload)
-            
-            message = f"{header_b64}.{payload_b64}"
-            signature = hmac.new(
-                key.encode(),
-                message.encode(),
-                hashlib.sha256
-            ).digest()
-            signature_b64 = base64.urlsafe_b64encode(signature).decode().rstrip('=')
-            
-            return f"{message}.{signature_b64}"
-        
-        @staticmethod
-        def decode(token: str, key: str, algorithms: List[str] = ["HS256"]) -> dict:
-            try:
-                header_b64, payload_b64, signature_b64 = token.split('.')
-                
-                # Add padding back
-                def _base64_decode(data: str) -> str:
-                    padding = 4 - len(data) % 4
-                    if padding != 4:
-                        data += '=' * padding
-                    return base64.urlsafe_b64decode(data).decode()
-                
-                payload_json = _base64_decode(payload_b64)
-                payload = json.loads(payload_json)
-                
-                # Verify signature
-                message = f"{header_b64}.{payload_b64}"
-                expected_signature = hmac.new(
-                    key.encode(),
-                    message.encode(),
-                    hashlib.sha256
-                ).digest()
-                
-                # Add padding back to signature
-                signature_padded = signature_b64
-                padding = 4 - len(signature_padded) % 4
-                if padding != 4:
-                    signature_padded += '=' * padding
-                
-                actual_signature = base64.urlsafe_b64decode(signature_padded)
-                
-                if not hmac.compare_digest(expected_signature, actual_signature):
-                    raise JWTError("Invalid signature")
-                
-                return payload
-            except Exception as e:
-                raise JWTError(f"Token decode error: {e}")
 
 ALGORITHM = os.getenv("AUTH_JWT_ALG","HS256")
 SIGNING_KEY = os.getenv("AUTH_SIGNING_KEY","dev-signing-key-change-me")
