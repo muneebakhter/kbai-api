@@ -140,11 +140,11 @@ def track_metrics(endpoint: str):
         return wrapper
     return decorator
 
-@app.get("/healthz", response_class=PlainTextResponse)
+@app.get("/healthz", response_class=PlainTextResponse, include_in_schema=False)
 async def healthz():
     return "ok"
 
-@app.get("/readyz", response_class=PlainTextResponse)
+@app.get("/readyz", response_class=PlainTextResponse, include_in_schema=False)
 async def readyz():
     # Check database connectivity
     try:
@@ -155,7 +155,7 @@ async def readyz():
     READY_GAUGE.set(1 if ready else 0)
     return "ready" if ready else "not ready"
 
-@app.get("/metrics")
+@app.get("/metrics", include_in_schema=False)
 async def metrics():
     return Response(generate_latest(), media_type=CONTENT_TYPE_LATEST)
 
@@ -185,7 +185,7 @@ async def create_token(req: TokenRequest):
     )
 
 # Test endpoint
-@app.get("/v1/test/ping", tags=["Test"])
+@app.get("/v1/test/ping", tags=["Test"], include_in_schema=False)
 async def ping(request: Request, auth: dict = Depends(get_current_auth), echo: Optional[str]=Query(None)):
     from datetime import datetime, timezone
     return {
@@ -197,7 +197,7 @@ async def ping(request: Request, auth: dict = Depends(get_current_auth), echo: O
     }
 
 # Observability endpoints
-@app.get("/v1/traces", response_model=TracesResponse, tags=["Observability"])
+@app.get("/v1/traces", response_model=TracesResponse, tags=["Observability"], include_in_schema=False)
 async def list_traces(
     request: Request,
     auth: dict = Depends(get_current_auth),
@@ -235,7 +235,7 @@ async def list_traces(
         ))
     return TracesResponse(items=items, next_cursor=None)
 
-@app.get("/v1/traces/{trace_id}", response_model=TraceItem, tags=["Observability"])
+@app.get("/v1/traces/{trace_id}", response_model=TraceItem, tags=["Observability"], include_in_schema=False)
 async def get_trace(
     trace_id: str,
     request: Request,
@@ -260,7 +260,7 @@ async def get_trace(
         body_sha256=row["body_sha256"], token_sub=row["token_sub"], error=row["error"]
     )
 
-@app.get("/v1/metrics/summary", response_model=MetricsSummary, tags=["Observability"])
+@app.get("/v1/metrics/summary", response_model=MetricsSummary, tags=["Observability"], include_in_schema=False)
 async def metrics_summary(
     request: Request,
     auth: dict = Depends(get_current_auth),
@@ -275,7 +275,7 @@ async def metrics_summary(
     data = app.state.db.metrics_summary(window_seconds=window_seconds)
     return data
 
-@app.get("/admin/health/status", response_model=HealthStatus, tags=["Admin"])
+@app.get("/admin/health/status", response_model=HealthStatus, tags=["Admin"], include_in_schema=False)
 async def health_status(request: Request, auth: dict = Depends(get_current_auth)):
     """Get comprehensive health status."""
     uptime = time.time() - app.state.startup_time
@@ -296,7 +296,7 @@ async def health_status(request: Request, auth: dict = Depends(get_current_auth)
         version=VERSION
     )
 
-@app.get("/admin/metrics/stream", tags=["Admin"])
+@app.get("/admin/metrics/stream", tags=["Admin"], include_in_schema=False)
 async def metrics_stream(
     request: Request, 
     api_key: Optional[str] = Query(None),
@@ -385,12 +385,12 @@ async def metrics_stream(
     )
 
 # Admin dashboard with no authentication requirement - handles auth in the frontend
-@app.get("/admin", response_class=HTMLResponse, tags=["Admin"])
+@app.get("/admin", response_class=HTMLResponse, tags=["Admin"], include_in_schema=False)
 async def admin_dashboard(request: Request):
     return templates.TemplateResponse("admin.html", {"request": request, "title": TITLE})
 
 # Dashboard redirect (legacy support)
-@app.get("/dashboard", response_class=HTMLResponse, tags=["Admin"])
+@app.get("/dashboard", response_class=HTMLResponse, tags=["Admin"], include_in_schema=False)
 async def dashboard_redirect(request: Request):
     return templates.TemplateResponse("admin.html", {"request": request, "title": TITLE})
 
