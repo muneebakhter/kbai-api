@@ -31,10 +31,11 @@ from .models import (
 from .middleware import TraceMiddleware
 
 APP_DIR = Path(__file__).resolve().parent
-# Canonical storage root in HOME as requested
-HOME_ROOT = Path.home()
-PROJ_MAP_FILE = HOME_ROOT / "proj_mapping.txt"
-LOG_DIR = HOME_ROOT / ".kbai"
+# Use root directory as requested in problem statement
+ROOT_DIR = APP_DIR.parent
+DATA_DIR = ROOT_DIR / "data"
+PROJ_MAP_FILE = DATA_DIR / "proj_mapping.txt"
+LOG_DIR = Path.home() / ".kbai"
 LOG_DIR.mkdir(parents=True, exist_ok=True)
 REQUEST_LOG = LOG_DIR / "requests.jsonl"
 
@@ -78,8 +79,20 @@ REQUEST_LATENCY = Histogram("kbai_request_latency_seconds", "Request latency", [
 READY_GAUGE = Gauge("kbai_ready", "Readiness state (1 ready, 0 not)")
 
 # Data directory for project storage
-DATA_DIR = HOME_ROOT / ".kbai" / "data"
 DATA_DIR.mkdir(parents=True, exist_ok=True)
+
+# Initialize AI Worker
+AI_WORKER = None
+
+def get_ai_worker():
+    """Get or initialize AI worker instance"""
+    global AI_WORKER
+    if AI_WORKER is None:
+        import sys
+        sys.path.append(str(ROOT_DIR))
+        from ai_worker import AIWorker
+        AI_WORKER = AIWorker(str(DATA_DIR), env("OPENAI_API_KEY"))
+    return AI_WORKER
 
 def _project_dir(project_id: str) -> Path:
     d = DATA_DIR / project_id
@@ -489,20 +502,45 @@ async def ingest_data(project_id: str, request: Request, file: UploadFile = File
         content = await file.read()
         f.write(content)
     
+    # Trigger reindexing after file upload
+    try:
+        ai_worker = get_ai_worker()
+        ai_worker.build_index_for_project(project_id)
+    except Exception as e:
+        # Log error but don't fail the upload
+        print(f"Warning: Reindexing failed after upload: {e}")
+    
     return {"detail": f"File '{file.filename}' uploaded successfully", "size": len(content)}
 
 @app.post("/v1/projects/{project_id}/reindex", tags=["Projects"])
 async def reindex(project_id: str, request: Request, auth: dict = Depends(get_current_auth)):
-    # This would typically trigger a background reindexing process
-    return {"detail": "Reindexing initiated (not implemented)"}
+    """Trigger reindexing for a project"""
+    try:
+        ai_worker = get_ai_worker()
+        success = ai_worker.build_index_for_project(project_id)
+        
+        if success:
+            return {"detail": f"Reindexing completed successfully for project {project_id}"}
+        else:
+            raise HTTPException(status_code=500, detail="Reindexing failed")
+            
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Reindexing error: {str(e)}")
 
 @app.post("/v1/query", response_model=QueryResponse, tags=["Projects"])
 async def query_kb(req: QueryRequest, request: Request, auth: dict = Depends(get_current_auth)):
-    # This would typically perform semantic search or AI-based query processing
-    return QueryResponse(
-        answer="This is a placeholder response. Query processing not yet implemented.",
-        sources=[]
-    )
+    """Query the knowledge base with AI-powered processing"""
+    try:
+        ai_worker = get_ai_worker()
+        result = ai_worker.process_query(req.query, req.project_id)
+        
+        return QueryResponse(
+            answer=result["answer"],
+            sources=result["sources"]
+        )
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Query processing error: {str(e)}")
 
 @app.get("/v1/projects/{project_id}/stats", tags=["Projects"])
 async def project_stats(project_id: str, request: Request, auth: dict = Depends(get_current_auth)):

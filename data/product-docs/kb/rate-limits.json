@@ -1,0 +1,12 @@
+{
+  "id": "rate-limits",
+  "title": "API Rate Limits",
+  "content": "Our API has rate limits to ensure fair usage. Free tier: 100 requests/hour. Pro tier: 1000 requests/hour. Enterprise: unlimited.",
+  "category": "API Documentation",
+  "tags": [
+    "api",
+    "rate-limits",
+    "quotas"
+  ],
+  "source_url": "https://docs.example.com/api/rate-limits"
+}

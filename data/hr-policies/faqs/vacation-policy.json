@@ -1,0 +1,11 @@
+{
+  "id": "vacation-policy",
+  "question": "What is the vacation policy?",
+  "answer": "Employees accrue 15 days of vacation per year, with additional days based on tenure. Vacation must be approved by your manager in advance.",
+  "category": "Benefits",
+  "tags": [
+    "vacation",
+    "pto",
+    "time-off"
+  ]
+}

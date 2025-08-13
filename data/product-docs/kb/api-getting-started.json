@@ -1,0 +1,12 @@
+{
+  "id": "api-getting-started",
+  "title": "API Getting Started Guide",
+  "content": "Welcome to our API! This guide will help you get started with making your first API calls. First, obtain an API key from your dashboard...",
+  "category": "API Documentation",
+  "tags": [
+    "api",
+    "getting-started",
+    "authentication"
+  ],
+  "source_url": "https://docs.example.com/api/getting-started"
+}

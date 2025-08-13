@@ -1,0 +1,11 @@
+{
+  "id": "remote-work",
+  "question": "Can I work remotely?",
+  "answer": "Remote work is available on a case-by-case basis with manager approval. Hybrid schedules are encouraged for better work-life balance.",
+  "category": "Work Policies",
+  "tags": [
+    "remote",
+    "work-from-home",
+    "hybrid"
+  ]
+}
