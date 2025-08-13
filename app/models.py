@@ -66,12 +66,12 @@ class BatchKBUpsertRequest(BaseModel):
     items: List[KBArticle]
 
 class QueryRequest(BaseModel):
-    project_id: str
-    question: str
+    query: str = Field(..., description="The query/question to search for")
+    project_id: Optional[str] = Field(None, description="Project ID to search within")
 
 class QueryResponse(BaseModel):
-    answer: str
-    sources: List[str] = []
+    answer: str = Field(..., description="The generated answer")
+    sources: List[dict] = Field(default_factory=list, description="Source documents used")
 
 class AuthModes(BaseModel):
     jwt_enabled: bool = True

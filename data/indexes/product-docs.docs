@@ -1,0 +1,42 @@
+[
+  {
+    "id": 0,
+    "type": "kb",
+    "source_file": "data/product-docs/kb/rate-limits.json",
+    "project_id": "product-docs",
+    "title": "API Rate Limits",
+    "content": "Title: API Rate Limits\nContent: Our API has rate limits to ensure fair usage. Free tier: 100 requests/hour. Pro tier: 1000 requests/hour. Enterprise: unlimited.",
+    "metadata": {
+      "id": "rate-limits",
+      "title": "API Rate Limits",
+      "content": "Our API has rate limits to ensure fair usage. Free tier: 100 requests/hour. Pro tier: 1000 requests/hour. Enterprise: unlimited.",
+      "category": "API Documentation",
+      "tags": [
+        "api",
+        "rate-limits",
+        "quotas"
+      ],
+      "source_url": "https://docs.example.com/api/rate-limits"
+    }
+  },
+  {
+    "id": 1,
+    "type": "kb",
+    "source_file": "data/product-docs/kb/api-getting-started.json",
+    "project_id": "product-docs",
+    "title": "API Getting Started Guide",
+    "content": "Title: API Getting Started Guide\nContent: Welcome to our API! This guide will help you get started with making your first API calls. First, obtain an API key from your dashboard...",
+    "metadata": {
+      "id": "api-getting-started",
+      "title": "API Getting Started Guide",
+      "content": "Welcome to our API! This guide will help you get started with making your first API calls. First, obtain an API key from your dashboard...",
+      "category": "API Documentation",
+      "tags": [
+        "api",
+        "getting-started",
+        "authentication"
+      ],
+      "source_url": "https://docs.example.com/api/getting-started"
+    }
+  }
+]

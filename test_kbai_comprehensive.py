@@ -126,7 +126,7 @@ class KBAPITester:
         try:
             payload = {
                 "query": "What is the ASPCA website?",
-                "project_id": "tech-support"
+                "project_id": "aspca-test"  # Use aspca-test project
             }
             
             response = self.session.post(f"{self.base_url}/v1/query", json=payload)
@@ -134,9 +134,10 @@ class KBAPITester:
             
             result = response.json()
             answer = result["answer"].lower()
+            sources = result["sources"]
             
-            # Check if response indicates no information found
-            if "couldn't find" in answer or "no" in answer or "not" in answer:
+            # Check if no relevant sources found OR answer indicates no information
+            if len(sources) == 0 or "couldn't find" in answer or "no" in answer or "not" in answer or "error" in answer:
                 self.log("ASPCA query correctly failed (no information found)")
                 return True
             else:

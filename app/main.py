@@ -90,8 +90,8 @@ def get_ai_worker():
     if AI_WORKER is None:
         import sys
         sys.path.append(str(ROOT_DIR))
-        from ai_worker import AIWorker
-        AI_WORKER = AIWorker(str(DATA_DIR), env("OPENAI_API_KEY"))
+        from simple_ai_worker import SimpleAIWorker
+        AI_WORKER = SimpleAIWorker(str(DATA_DIR), env("OPENAI_API_KEY"))
     return AI_WORKER
 
 def _project_dir(project_id: str) -> Path:

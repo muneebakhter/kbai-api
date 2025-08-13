@@ -62,7 +62,7 @@ echo "🔍 Building AI indexes..."
 python -c "
 import sys
 sys.path.append('.')
-from ai_worker import initialize_all_indexes
+from simple_ai_worker import initialize_all_indexes
 success = initialize_all_indexes('$DATA_DIR')
 if success:
     print('✅ All indexes built successfully')

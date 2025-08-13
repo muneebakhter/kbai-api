@@ -1,0 +1,40 @@
+[
+  {
+    "id": 0,
+    "type": "faq",
+    "source_file": "data/tech-support/faqs/software-install.json",
+    "project_id": "tech-support",
+    "title": "How do I install the company software?",
+    "content": "Q: How do I install the company software?\nA: Download the installer from the company portal, run as administrator, and follow the setup wizard. Contact IT if you encounter issues.",
+    "metadata": {
+      "id": "software-install",
+      "question": "How do I install the company software?",
+      "answer": "Download the installer from the company portal, run as administrator, and follow the setup wizard. Contact IT if you encounter issues.",
+      "category": "Software",
+      "tags": [
+        "install",
+        "software",
+        "setup"
+      ]
+    }
+  },
+  {
+    "id": 1,
+    "type": "faq",
+    "source_file": "data/tech-support/faqs/password-reset.json",
+    "project_id": "tech-support",
+    "title": "How do I reset my password?",
+    "content": "Q: How do I reset my password?\nA: You can reset your password by clicking the 'Forgot Password' link on the login page and following the instructions sent to your email.",
+    "metadata": {
+      "id": "password-reset",
+      "question": "How do I reset my password?",
+      "answer": "You can reset your password by clicking the 'Forgot Password' link on the login page and following the instructions sent to your email.",
+      "category": "Authentication",
+      "tags": [
+        "password",
+        "login",
+        "reset"
+      ]
+    }
+  }
+]

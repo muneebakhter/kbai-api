@@ -1,0 +1,13 @@
+[
+  {
+    "id": 0,
+    "type": "document",
+    "source_file": "/home/runner/work/kbai-api/kbai-api/data/aspca-test/ingest/ASPCATest.docx",
+    "project_id": "aspca-test",
+    "title": "ASPCATest.docx",
+    "content": "ASPCA Test Document\nAbout ASPCA\nThe American Society for the Prevention of Cruelty to Animals (ASPCA) is a non-profit organization dedicated to preventing animal cruelty. Founded in 1866, the ASPCA was the first animal welfare organization established in North America.\nMission Statement\nTo provide effective means for the prevention of cruelty to animals throughout the United States.\nServices\n• Animal rescue and placement\n• Animal health services\n• Anti-cruelty investigations\n• Government relations and advocacy\n• Animal behavior and training\nContact Information\nWebsite: https://www.aspca.org\nPhone: (212) 876-7700\nAddress: 424 E 92nd St, New York, NY 10128-6804\nKey Programs\n1. ASPCA Animal Poison Control Center\n2. ASPCA Behavioral Rehabilitation Center\n3. ASPCA Spay/Neuter Alliance\n4. ASPCA Field Investigation and Response team\nThe ASPCA operates the nation's poison control center for animals and provides 24/7 emergency assistance. They also run adoption centers and provide educational resources for pet owners. The organization is committed to advancing the safety and well-being of animals through advocacy, education, and hands-on care.",
+    "metadata": {
+      "filename": "ASPCATest.docx"
+    }
+  }
+]

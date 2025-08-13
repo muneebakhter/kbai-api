@@ -1,0 +1,40 @@
+[
+  {
+    "id": 0,
+    "type": "faq",
+    "source_file": "data/hr-policies/faqs/vacation-policy.json",
+    "project_id": "hr-policies",
+    "title": "What is the vacation policy?",
+    "content": "Q: What is the vacation policy?\nA: Employees accrue 15 days of vacation per year, with additional days based on tenure. Vacation must be approved by your manager in advance.",
+    "metadata": {
+      "id": "vacation-policy",
+      "question": "What is the vacation policy?",
+      "answer": "Employees accrue 15 days of vacation per year, with additional days based on tenure. Vacation must be approved by your manager in advance.",
+      "category": "Benefits",
+      "tags": [
+        "vacation",
+        "pto",
+        "time-off"
+      ]
+    }
+  },
+  {
+    "id": 1,
+    "type": "faq",
+    "source_file": "data/hr-policies/faqs/remote-work.json",
+    "project_id": "hr-policies",
+    "title": "Can I work remotely?",
+    "content": "Q: Can I work remotely?\nA: Remote work is available on a case-by-case basis with manager approval. Hybrid schedules are encouraged for better work-life balance.",
+    "metadata": {
+      "id": "remote-work",
+      "question": "Can I work remotely?",
+      "answer": "Remote work is available on a case-by-case basis with manager approval. Hybrid schedules are encouraged for better work-life balance.",
+      "category": "Work Policies",
+      "tags": [
+        "remote",
+        "work-from-home",
+        "hybrid"
+      ]
+    }
+  }
+]
